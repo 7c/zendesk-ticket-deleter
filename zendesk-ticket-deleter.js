@@ -5,6 +5,7 @@ var argv = require('minimist')(process.argv.slice(2))
 var username,apikey,apiurl
 var deleteDays = 120
 var tickets = []
+var ticketsDeleted = []
 var totalDeleted = 0
 
 
@@ -30,6 +31,7 @@ function deleteTicket(zendesk,ticket) {
                 if (err) return reject(err)
                 resolve(true)
                 totalDeleted++
+                ticketsDeleted.push(ticket.id)
                 return
             })
         } else reject('unknown ticket')
@@ -41,6 +43,7 @@ async function start_worker(zendesk) {
     await wait(2)
     while(tickets.length>0) {
         var ticket = tickets.shift()
+        if (ticketsDeleted.includes(ticket.id)) continue
         await wait(1/2)
         try {
             await deleteTicket(zendesk,ticket)
