@@ -5,6 +5,7 @@ var argv = require('minimist')(process.argv.slice(2))
 var username,apikey,apiurl
 var deleteDays = 120
 var tickets = []
+var totalDeleted = 0
 
 
 Date.prototype.yyyymmdd = function(seperator="") {
@@ -28,6 +29,7 @@ function deleteTicket(zendesk,ticket) {
             zendesk.tickets.delete(ticket.id,(err)=>{
                 if (err) return reject(err)
                 resolve(true)
+                totalDeleted++
                 return
             })
         } else reject('unknown ticket')
@@ -42,7 +44,7 @@ async function start_worker(zendesk) {
         await wait(1/2)
         try {
             await deleteTicket(zendesk,ticket)
-            console.log(chalk.green(`deleted ticket #${ticket.id}, last update ${ticket.updated_at}, left: ${tickets.length}`))
+            console.log(chalk.green(`deleted ticket #${ticket.id}, last update ${ticket.updated_at}, left:${tickets.length}, deleted:${totalDeleted}`))
         }catch(err2) {
             if (err2.statusCode===404) {
                 console.log(chalk.red(`ticket #${ticket.id} not found, skipped`))
@@ -105,13 +107,17 @@ async function start() {
 
 
         var observer = {
-            error: console.error,
+            error: function (err) {
+                console.log(err)
+                // we will wait worker to complete all tickets list
+            },
             next: async function(status, body, response, result, nextPage) {
                 tickets = tickets.concat(body)
-                
+                console.log(body.length)
                 // console.log(status,body.length,response.length)
             //   console.log(JSON.stringify(body, null, 2, true));
-              console.log('Next page:', nextPage,tickets.length);
+              debug(`next page = ${nextPage}`)
+              nextPage=false
             },
             complete: function(statusList, body, responseList, resultList) {
               console.log(chalk.green(`successfully processed`))
