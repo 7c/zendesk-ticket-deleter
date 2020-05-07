@@ -33,5 +33,8 @@ or
 DEBUG=* node zendesk-ticket-deleter.js --apikey 'z3guwt7an64ck7ysqknrfq5bavr3g2hm' --username 'info@test.com' --apiurl 'https://test.zendesk.com/api/v2'
 ```
 
+## Mutex
+to avoid multiple times same operation to be started i have implemenented tcp-mutex package which binds a tcp port to avoid same process to be started several times. You may use optional `--lockport=<port>` parameter to activate
+
 ## Rate limiting
 Zendesk API does rate limit, that is why i have put 1 second wait after each delete operation.

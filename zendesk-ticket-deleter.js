@@ -2,11 +2,13 @@ var ZD = require('node-zendesk')
 var debug = require('debug')('main')
 var chalk = require('chalk')
 var argv = require('minimist')(process.argv.slice(2))
+var {tryLock} = require('tcp-mutex')
 var username,apikey,apiurl
 var deleteDays = 120
 var tickets = []
 var ticketsDeleted = []
 var totalDeleted = 0
+
 
 
 Date.prototype.yyyymmdd = function(seperator="") {
@@ -40,7 +42,7 @@ function deleteTicket(zendesk,ticket) {
 
 
 async function start_worker(zendesk) {
-    await wait(2)
+    await wait(5)
     while(tickets.length>0) {
         var ticket = tickets.shift()
         if (ticketsDeleted.includes(ticket.id)) continue
@@ -76,8 +78,12 @@ async function start() {
         username = argv.username ? argv.username : process.env.zd_username ? process.env.zd_username : false
         apikey = argv.apikey ? argv.apikey : process.env.zd_apikey ? process.env.zd_apikey : false
         apiurl = argv.apiurl ? argv.apiurl : process.env.zd_apiurl ? process.env.zd_apiurl : false
+        
         if (argv.days && parseInt(argv.days)>0) deleteDays = parseInt(argv.days)
-
+        // optional lockport
+        if (argv.lockport && parseInt(argv.lockport)>0) {
+            await tryLock(parseInt(argv.lockport))
+        }
 
         if (!username || !apikey || !apiurl) {
             console.log(chalk.bold.blue('Usage:'))

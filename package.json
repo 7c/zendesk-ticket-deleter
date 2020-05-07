@@ -1,6 +1,6 @@
 {
   "name": "zendesk-ticket-deleter",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "chalk": "^4.0.0",
     "debug": "^4.1.1",
     "minimist": "^1.2.5",
-    "node-zendesk": "^1.4.0"
+    "node-zendesk": "^1.4.0",
+    "tcp-mutex": "^1.0.1"
   }
 }
