@@ -33,4 +33,5 @@ or
 DEBUG=* node zendesk-ticket-deleter.js --apikey 'z3guwt7an64ck7ysqknrfq5bavr3g2hm' --username 'info@test.com' --apiurl 'https://test.zendesk.com/api/v2'
 ```
 
-
+## Rate limiting
+Zendesk API does rate limit, that is why i have put 1 second wait after each delete operation.

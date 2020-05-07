@@ -4,6 +4,7 @@ var chalk = require('chalk')
 var argv = require('minimist')(process.argv.slice(2))
 var username,apikey,apiurl
 var deleteDays = 120
+var tickets = []
 
 
 Date.prototype.yyyymmdd = function(seperator="") {
@@ -21,6 +22,7 @@ function wait(seconds=1){
 
 function deleteTicket(zendesk,ticket) {
     return new Promise(async function (resolve,reject) {
+        // zendesk api rate limit 200 hits / minute
         if (ticket && ticket.hasOwnProperty("id") && ticket.hasOwnProperty('updated_at')) {
             debug(`deleteTicket ${ticket.id}`)
             zendesk.tickets.delete(ticket.id,(err)=>{
@@ -30,6 +32,38 @@ function deleteTicket(zendesk,ticket) {
             })
         } else reject('unknown ticket')
     })
+}
+
+
+async function start_worker(zendesk) {
+    await wait(2)
+    while(tickets.length>0) {
+        var ticket = tickets.shift()
+        await wait(1/2)
+        try {
+            await deleteTicket(zendesk,ticket)
+            console.log(chalk.green(`deleted ticket #${ticket.id}, last update ${ticket.updated_at}, left: ${tickets.length}`))
+        }catch(err2) {
+            if (err2.statusCode===404) {
+                console.log(chalk.red(`ticket #${ticket.id} not found, skipped`))
+                continue
+            }
+            if (err2.statusCode===429) {
+                console.log(chalk.red(`API Rate limited`),err2.toString())
+                console.log(`waiting 60 seconds to reset`)
+                await wait(60)
+                continue
+                process.exit(0)
+            }
+            console.log(`Exception by deleting the ticket ${ticket.id}`)
+            console.log(ticket)
+            console.log(err2)
+            
+            process.exit(0)
+        }
+    }
+    console.log(`done`)
+    process.exit(0)
 }
 
 async function start() {
@@ -73,34 +107,11 @@ async function start() {
         var observer = {
             error: console.error,
             next: async function(status, body, response, result, nextPage) {
-                if (status===200 && body.length>0) {
-                    for(var ticket of body)
-                    {
-                        try {
-                            await deleteTicket(zendesk,ticket)
-                            console.log(chalk.green(`deleted ticket #${ticket.id}, last update ${ticket.updated_at}`))
-                            // zendesk api rate limit 200 hits / minute
-                            await wait(2)
-                        }catch(err2) {
-                            if (err2.statusCode===404) {
-                                console.log(chalk.red(`ticket #${ticket.id} not found, skipped`))
-                                continue
-                            }
-                            if (err2.statusCode===429) {
-                                console.log(chalk.red(`API Rate limited`),err2.toString())
-                                process.exit(0)
-                            }
-                            console.log(`Exception by deleting the ticket ${ticket.id}`)
-                            console.log(ticket)
-                            console.log(err2)
-                            
-                            process.exit(0)
-                        }
-                    }
-                }
+                tickets = tickets.concat(body)
+                
                 // console.log(status,body.length,response.length)
             //   console.log(JSON.stringify(body, null, 2, true));
-              console.log('Next page:', nextPage);
+              console.log('Next page:', nextPage,tickets.length);
             },
             complete: function(statusList, body, responseList, resultList) {
               console.log(chalk.green(`successfully processed`))
@@ -110,6 +121,7 @@ async function start() {
 
         // initite the search
         zendesk.search.queryAll(`type:ticket updated<"${deleteBefore}"`,observer)
+        start_worker(zendesk)
     } catch(err) {
         console.log(chalk.red(err))
     }
