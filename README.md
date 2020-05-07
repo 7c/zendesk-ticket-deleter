@@ -7,6 +7,9 @@ This library uses node-zendesk (https://github.com/blakmatrix/node-zendesk) libr
 
 By default it will delete all tickets they are older than 120 days from now. You may pass --days <integer> to define a value greater than 30 (security reasons)
 
+
+![demo](demo.gif)
+
 ## Installation
 ```
 git clone https://github.com/7c/zendesk-ticket-deleter.git
