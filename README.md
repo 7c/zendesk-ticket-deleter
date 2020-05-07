@@ -5,7 +5,7 @@ Zendesk seems to archive tickets after 120 days and then they are not visible in
 This library uses node-zendesk (https://github.com/blakmatrix/node-zendesk) library to communicate with API. You will need access to API in order to use this tool.
 
 
-By default it will delete all tickets they are older than 120 days from now. You may pass --days <integer> to define a value greater than 30 (security reasons)
+By default it will delete all tickets they are older than 120 days from now. You may pass `--days <integer>` to define a value greater than 30 (security reasons)
 
 
 ![demo](demo.gif)
@@ -33,7 +33,7 @@ or
 DEBUG=* node zendesk-ticket-deleter.js --apikey 'z3guwt7an64ck7ysqknrfq5bavr3g2hm' --username 'info@test.com' --apiurl 'https://test.zendesk.com/api/v2'
 ```
 
-## Mutex
+## Tcp Mutex
 to avoid multiple times same operation to be started i have implemenented tcp-mutex package which binds a tcp port to avoid same process to be started several times. You may use optional `--lockport=<port>` parameter to activate
 
 ## Rate limiting
