@@ -130,7 +130,7 @@ async function start() {
             },
             complete: function(statusList, body, responseList, resultList) {
               console.log(chalk.green(`successfully processed`))
-              process.exit(0)
+              
             }
         }
 
